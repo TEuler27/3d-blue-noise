@@ -30,5 +30,5 @@ The solve function solves the 3D blue noise problem. It has the following parame
 The saveNetwork function saves the diagram of the actual power diagram in an .obj file. It is also able to intersect the diagram with simple closed surfaces (es. cylinder, sphere). it accepts the following parameters:
 
 - filename (default 'network.obj'): path of the file to be saved
-- isOutside (default None): function that accept a point of shape (1,3) and returns a Boolean representing whether the point is inside or outside the surface. This function is needed when the network needs to be intersected with a surface (Es for a cilynder isOutside(x) is ```x[0] ** 2 + x[1] ** 2 > r ** 2```)
-- intersect (default None): function that accepts two points x,y of shape (1, 3) where isOutside(x) is False and isOutside(y) is True and returns the intersection of the edge [x,y] with the surface.
+- isOutside (default None): function that accept a point of shape (1,3) and returns a Boolean representing whether the point is inside or outside the surface. This function is required when the network needs to be intersected with a surface (Es for a cilynder ```isOutside(x)``` is ```x[0] ** 2 + x[1] ** 2 > r ** 2```)
+- intersect (default None): function that accepts two points x,y of shape (1, 3) where isOutside(x) is False and isOutside(y) is True and returns the intersection of the edge [x,y] with the surface. This function is required when the network needs to be intersected with a surface
