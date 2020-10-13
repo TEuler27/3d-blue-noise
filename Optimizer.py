@@ -10,7 +10,6 @@ from functools import partial
 import pyny3d.geoms as pyny
 import pymesh
 import pickle
-from rejectionsampling import randomvariate
 from EmptyCell import EmptyCell
 
 class Optimizer:
@@ -68,7 +67,7 @@ class Optimizer:
         return {k: v for k, v in self.__dict__.items() if (not isinstance(v, Container)) and (not isinstance(v, multiprocessing.pool.Pool))}
 
     def rho(self,x,i):
-        return self.rhoh(x) / self.totM
+        return self.rhoh(x)
 
     def rhoface(self, x, param, i):
         missingCoord = (- param[3] - (x.T @ np.concatenate([param[:i], param[i+1:3]])).T) / param[i]
@@ -139,7 +138,7 @@ class Optimizer:
         tetgen.run()
         mesh = tetgen.mesh
         tetra = np.array(mesh.vertices)[np.array(mesh.elements)].transpose([1,0,2])
-        scheme = quadpy.t3.keast_9()
+        scheme = quadpy.t3._keast.keast_9()
         integrals = scheme.integrate(partial(self.rho, i = 0), tetra)
         return integrals.sum()
 
@@ -195,7 +194,7 @@ class Optimizer:
         matrix = np.concatenate([points, newCol], axis = -1)
         return np.linalg.det(matrix) / 6
 
-    def integrateOverCell(self, tup, f, scheme = quadpy.t3.keast_9()):
+    def integrateOverCell(self, tup, f, scheme = quadpy.t3._keast.keast_9()):
         i, tup2 = tup
         vertices, facets = tup2
         if (vertices == np.array(None)).all():
@@ -231,7 +230,7 @@ class Optimizer:
             return integrals.sum(1)
         return integrals.sum(0)
 
-    def integrateOverFace(self, tup, scheme = quadpy.t2.wandzura_xiao_6()):
+    def integrateOverFace(self, tup, scheme = quadpy.t2._wandzura_xiao.wandzura_xiao_6()):
         key, vertices = tup
         polygon = pyny.Polygon(vertices, False)
         param = polygon.get_parametric(True, tolerance=0.001)
@@ -269,14 +268,14 @@ class Optimizer:
             H[key[1], key[1]] += entry
         return -H
 
-    def optimizeW(self, wCond, returnErrors = False, gamma = 0.001, max_iter = 20):
+    def optimizeW(self, wCond, returnErrors = False, gamma = 0.001, max_iter = 10):
         errors = []
         Fs = []
         grad = self.m - self.masses
         errors.append(np.linalg.norm(grad))
         Fs.append(self.F())
         i = 0
-        while not wCond(grad) and i < max_iter:
+        while (not wCond(grad)) and i < max_iter:
             H = self.hessianW()
             Hprimo = H.tocsc() - scipy.sparse.csc_matrix(gamma * np.eye(self.n))
             delta = scipy.sparse.linalg.spsolve(Hprimo, grad)
